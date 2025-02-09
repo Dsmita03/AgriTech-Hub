@@ -9,7 +9,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: "/", // Ensure correct base path for deployment
+  base: "./", // Ensure correct base path for deployment
   server: {
     historyApiFallback: true, // Serves index.html for unknown routes (fixes 404 issue)
   },
