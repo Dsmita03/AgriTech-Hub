@@ -27,7 +27,7 @@ const PlantDiseaseDetector = () => {
     formData.append("file", image);
 
     try {
-      const response = await axios.post("http://localhost:5002/api/disease/predict", formData, {
+      const response = await axios.post("https://agritech-hub-backend.onrender.com/api/disease/predict", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setResult(response.data);
