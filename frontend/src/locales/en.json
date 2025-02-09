@@ -1,0 +1,18 @@
+{
+    "weather": "Smart Weather Updates",
+    "getWeather": "Get Weather",
+    "temperature": "Temperature",
+    "description": "Description",
+      "community_forum": "Community Forum",
+      "post_placeholder": "What's on your mind?",
+      "post_button": "Post",
+      "posting": "Posting...",
+      "forum_posts": "Forum Posts",
+      "error_loading_posts": "Failed to load posts",
+      "error_fetching_posts": "Error fetching posts",
+      "error_creating_post": "Failed to create post",
+      "error_submitting_post": "Error submitting post"
+    
+    
+  }
+  

@@ -1,0 +1,18 @@
+{
+    "weather": "স্মার্ট আবহাওয়া আপডেট",
+    "getWeather": "আবহাওয়া পান",
+    "temperature": "তাপমাত্রা",
+    "description": "বিবরণ",
+      "community_forum": "কমিউনিটি ফোরাম",
+      "error_loading_posts": "পোস্ট লোড করতে ব্যর্থ হয়েছে।",
+      "error_fetching_posts": "পোস্ট fetch করতে ত্রুটি।",
+      "error_creating_post": "পোস্ট তৈরি করতে ত্রুটি।",
+      "error_submitting_post": "পোস্ট জমা দিতে ত্রুটি।",
+      "post_placeholder": "আপনার মনে কী আছে?",
+      "post_button": "পোস্ট করুন",
+      "forum_posts": "ফোরামের পোস্ট",
+      "posting": "পোস্ট করা হচ্ছে..."
+    
+    
+  }
+  

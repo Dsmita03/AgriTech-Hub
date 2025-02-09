@@ -1,0 +1,54 @@
+# Node modules
+node_modules/
+package-lock.json
+yarn.lock
+
+
+dataset 
+
+# Build directories
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variable files
+.env
+
+# IDE files
+.vscode/
+.idea/
+
+# macOS system files
+.DS_Store
+
+# Model files
+model/
+*.h5
+*.bin
+
+# OS-specific files
+Thumbs.db
+
+
+.kaggle/
+kaggle.json
+
+# Ignore virtual environment directory
+myenv/
+*.myenv
+
+# Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# macOS system files
+.DS_Store

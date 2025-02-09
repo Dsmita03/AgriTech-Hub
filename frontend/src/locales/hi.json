@@ -1,0 +1,18 @@
+{
+    "weather": "स्मार्ट मौसम अपडेट",
+    "getWeather": "मौसम प्राप्त करें",
+    "temperature": "तापमान",
+    "description": "विवरण",
+     "community_forum": "सामुदायिक मंच",
+      "post_placeholder": "आपके मन में क्या है?",
+      "post_button": "पोस्ट करें",
+      "posting": "पोस्ट हो रहा है...",
+      "forum_posts": "मंच पोस्ट",
+      "error_loading_posts": "पोस्ट लोड करने में विफल",
+      "error_fetching_posts": "पोस्ट प्राप्त करने में त्रुटि",
+      "error_creating_post": "पोस्ट बनाने में विफल",
+      "error_submitting_post": "पोस्ट जमा करने में त्रुटि"
+    
+    
+  }
+  
