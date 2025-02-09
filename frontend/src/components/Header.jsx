@@ -40,10 +40,8 @@ const Header = () => {
                             </div>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="bg-green-700 text-white rounded-md shadow-lg w-40">
-                            <DropdownMenuItem className="hover:bg-green-600 px-4 py-2 rounded-md transition duration-300 cursor-pointer">
-                                Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="hover:bg-red-500 px-4 py-2 rounded-md transition duration-300 cursor-pointer">
+
+                            <DropdownMenuItem className="hover:bg-slate-500 px-4 py-2 rounded-md transition duration-300 cursor-pointer">
                                 Log Out
                             </DropdownMenuItem>
                         </DropdownMenuContent>
