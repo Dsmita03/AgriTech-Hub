@@ -27,10 +27,7 @@ yarn-error.log*
 .DS_Store
 
 # Model files
-model/
-*.h5
-*.bin
-
+ 
 # OS-specific files
 Thumbs.db
 
