@@ -12,6 +12,9 @@ import "./App.css";
 import Home from "./pages/Article-Videos/pages/Home";
 import TopicPage from "./pages/Article-Videos/pages/TopicPage";
 import ContentPage from "./pages/Article-Videos/pages/ContentPage";
+import Contact from "./pages/Contact";
+
+import About from "./pages/About";
 
 
 function App() {
@@ -29,6 +32,9 @@ function App() {
         <Route path="/articles-videos" element={<Home />} />
         <Route path="/articles-videos/topic/:topicId" element={<TopicPage />} />
         <Route path="/articles-videos/content/:contentId" element={<ContentPage />} />
+        <Route path="/government-schemes" element={<GovernmentSchemes />} />
+        <Route path="/contact" element={<Contact/>} />
+        <Route path="/about" element={<About/>} />
       </Routes>
     </BrowserRouter>
   );
