@@ -6,14 +6,11 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "src"),
     },
   },
-  base: "./", // Ensure correct base path for deployment
+  base: "/", // Ensures correct base path
   server: {
-    historyApiFallback: true, // Serves index.html for unknown routes (fixes 404 issue)
-  },
-  build: {
-    outDir: "dist",
+    historyApiFallback: true, // Fixes 404 on page reload
   },
 });
