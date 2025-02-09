@@ -27,8 +27,8 @@ import { Button } from "@/components/ui/button";
 const FeatureCard = ({ href, icon, title, description }) => {
     const navigate = useNavigate();
     return (
-        <div onClick={() => navigate(href)} className="cursor-pointer">
-            <Card className="h-full transition-transform hover:scale-105 shadow-lg border border-gray-200 bg-white">
+        <div onClick={() => navigate(href)} className="cursor-pointer ">
+            <Card className="h-full p-4 transition-transform hover:scale-105 shadow-lg border border-gray-200 bg-white">
                 <CardHeader className="text-center flex flex-col items-center">
                     <div className="bg-green-100 p-3 rounded-full">{icon}</div>
                     <CardTitle className="text-xl font-semibold mt-2">
@@ -87,7 +87,7 @@ const LandingLayout = () => {
                             size="lg"
                             className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
                         >
-                            <Link to="#features">
+                            <Link onClick={() => document.getElementById("features").scrollIntoView({ behavior: "smooth" })}>
                                 Explore Features{" "}
                                 <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
@@ -98,10 +98,10 @@ const LandingLayout = () => {
                 {/* Features Section */}
                 <section id="features" className="py-20 bg-gray-100">
                     <div className="container mx-auto px-4">
-                        <h2 className="text-4xl font-bold mb-12 text-center text-gray-800">
+                        <h2 className="text-4xl font-bold mb-12 text-center text-gray-800 py-3">
                             Our Features
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             <FeatureCard
                                 href="/articles-videos"
                                 icon={<BookOpen className="h-10 w-10 text-green-600" />}
@@ -119,12 +119,6 @@ const LandingLayout = () => {
                                 icon={<Leaf className="h-10 w-10 text-green-600" />}
                                 title="Disease Detection"
                                 description="Identify plant diseases and get cures"
-                            />
-                            <FeatureCard
-                                href="/nutrient-recommendation"
-                                icon={<Flask className="h-10 w-10 text-green-600" />}
-                                title="Nutrient Recommendation"
-                                description="Get nutrient recommendations for your soil"
                             />
                              <FeatureCard
                                 href="/forum"
@@ -150,14 +144,7 @@ const LandingLayout = () => {
                                 title="Government Schemes"
                                 description="Get information about government schemes"
                             />
-                            <FeatureCard
-                                href=""
-                                icon={
-                                    <MessageSquare className="h-10 w-10 text-green-600" />
-                                }
-                                title="Chatbot"
-                                description="Get instant help from our chatbot"
-                            />
+                           
                         </div>
                     </div>
                 </section>
