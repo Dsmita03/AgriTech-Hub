@@ -77,7 +77,7 @@ const PlantDiseaseDetector = () => {
     {result && (
       <div className="mt-6 p-5 bg-green-50 border border-green-400 rounded-xl shadow-md">
         <h3 className="text-xl font-bold text-green-700">🌱 Disease: {result.disease}</h3>
-        <p className="text-gray-700 text-lg">📊 Confidence: {result.confidence}%</p>
+        <p className="text-gray-700 text-lg">📊 Confidence: {result.confidence*10}%</p>
       </div>
     )}
   </div>
