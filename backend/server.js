@@ -28,8 +28,8 @@ app.use(express.json());
 
 // Serve TensorFlow.js model files (if needed for frontend access)
 app.use('/model', express.static(path.join(__dirname, 'model')));
-app.use(express.static("public"));
-
+app.use(express.static("dist"));
+ 
 // Multer setup for handling image uploads
 const upload = multer({ storage: multer.memoryStorage() });
 
