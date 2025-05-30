@@ -60,7 +60,7 @@ const Forum = () => {
     const fetchPosts = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:5002/api/forum/posts");
+        const response = await fetch("https://agritech-hub-b8if.onrender.com/api/forum/posts");
         const data = await response.json();
         if (response.ok) {
           setPosts(data);
@@ -86,7 +86,7 @@ const Forum = () => {
   // Fetch comments for a specific post
   const fetchComments = async (postId) => {
     try {
-      const response = await fetch(`http://localhost:5002/api/forum/posts/${postId}/comments`);
+      const response = await fetch(`https://agritech-hub-b8if.onrender.com/api/forum/posts/${postId}/comments`);
       const data = await response.json();
       if (response.ok) {
         setComments((prev) => ({ ...prev, [postId]: data }));
@@ -113,7 +113,7 @@ const Forum = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5002/api/forum/posts", {
+      const response = await fetch("https://agritech-hub-b8if.onrender.com/api/forum/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: newPost, username: "Anonymous" }),
@@ -138,7 +138,7 @@ const Forum = () => {
     const commentText = e.target.comment.value.trim();
     if (!commentText) return;
     try {
-      const response = await fetch(`http://localhost:5002/api/forum/posts/${postId}/comment`, {
+      const response = await fetch(`https://agritech-hub-b8if.onrender.com/api/forum/posts/${postId}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ comment: commentText, username: "Anonymous" }),

@@ -1,6 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router"; // Fixed import
-import Signup from "./pages/Signup";
-import Signin from "./pages/SignIn";
+ 
 import LandingLayout from "./Layout/LandingLayout";
 import CropRecommendation from "./pages/CropRecommendation";
 import DiseaseDetection from "./pages/DiseaseDetection";
@@ -15,14 +14,16 @@ import ContentPage from "./pages/Article-Videos/pages/ContentPage";
 import Contact from "./pages/Contact";
 
 import About from "./pages/About";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Signin />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/dashboard" element={<LandingLayout />} /> 
         <Route path="/crop-recommendation" element={<CropRecommendation />} />
         <Route path="/disease-detection" element={<DiseaseDetection />} />

@@ -17,7 +17,7 @@ export default function GovernmentSchemes() {
     setError(null);
 
     try {
-      const response = await axios.get(`http://localhost:5002/api/schemes?language=${selectedLanguage}`);
+      const response = await axios.get(`https://agritech-hub-b8if.onrender.com/api/schemes?language=${selectedLanguage}`);
       setSchemes(response.data);
     } catch (error) {
       setError("Failed to fetch government schemes. Please try again.");

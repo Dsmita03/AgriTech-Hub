@@ -1,6 +1,5 @@
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";  // Import signOut from Firebase
 import { auth } from "@/lib/firebase";  // Import Firebase auth
@@ -48,15 +47,33 @@ const FeatureCard = ({ href, icon, title, description }) => {
 const LandingLayout = () => {
     const navigate = useNavigate();
 
+    // const handleSignOut = async () => {
+    //     try {
+    //         await signOut(auth);
+    //         navigate("/");  // Redirect to sign-in page after logout
+    //     } catch (error) {
+    //         console.error("Logout failed:", error);
+    //     }
+    // };
+
+
     const handleSignOut = async () => {
+        if (!auth.currentUser) {
+            console.warn("No user is currently signed in.");
+            return;
+        }
+    
+        console.log("Before sign out:", auth.currentUser);
         try {
             await signOut(auth);
-            navigate("/");  // Redirect to sign-in page after logout
+            console.log("Signed out successfully");
+            window.location.href = "/";  // Force page reload after logout
         } catch (error) {
             console.error("Logout failed:", error);
         }
     };
-
+    
+    
     return (
         <div className="flex flex-col min-h-screen">
             {/* Header with Logout Button */}

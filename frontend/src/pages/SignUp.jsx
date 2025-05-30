@@ -22,7 +22,7 @@ const formSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export default function SignUpPage() {
+export default function SignUp() {
   const [error, setError] = useState(null); // Added error state [NEW]
   const navigate = useNavigate();  // Initialize navigation [NEW]
   

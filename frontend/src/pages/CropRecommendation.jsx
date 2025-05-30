@@ -19,7 +19,7 @@ const CropRecommendation = () => {
     setData(null);
 
     try {
-      const response = await fetch("http://localhost:5002/api/crop-recommendation", {
+      const response = await fetch("https://agritech-hub-b8if.onrender.com/api/crop-recommendation", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

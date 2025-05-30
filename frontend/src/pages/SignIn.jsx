@@ -15,7 +15,7 @@ const formSchema = z.object({
   rememberMe: z.boolean().optional(),
 });
 
-export default function Signin() {
+export default function SignIn() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const provider = new GoogleAuthProvider();
