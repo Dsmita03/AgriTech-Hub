@@ -65,7 +65,7 @@ export default function SignUp() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-green-600">
                 <span className="text-sm">🌿</span>
-                <span className="text-sm font-medium">GreenAry Agriculture</span>
+                <span className="text-sm font-medium">AgriTech-Hub</span>
               </div>
               <h1 className="text-2xl font-bold tracking-tight">Ready to grow your farming success?</h1>
               <p className="text-xs text-muted-foreground">Join our community of modern farmers and agricultural experts.</p>

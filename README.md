@@ -12,6 +12,16 @@ AgriTech-Hub is an advanced agriculture-based platform designed to empower farme
 - **Community Forum**: Enables discussions, problem-solving, and idea-sharing among users.
 - **Government Schemes & Subsidies**: Provides updated information on agricultural schemes and subsidies.
 
+<h2 id="screenshots">⚙ Screenshots</h2>
+<h4>Login Page</h4>
+<img src="snaps/Login.png" alt="Login Page" width="800">
+<h4>Home Page</h4>
+<img src="snaps/home.png" alt="Home Page" width="800">
+<h4>Features Page</h4>
+<img src="snaps/features.png" alt="Features Page" width="800">
+<h4>Plant Disease Detector</h4>
+<img src="snaps/plant.png" alt="Plant" width="800">
+
 ## Tech Stack
 ### Frontend
 - **Framework**: React (Vite) with Tailwind CSS
