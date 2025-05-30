@@ -14,7 +14,7 @@ AgriTech-Hub is an advanced agriculture-based platform designed to empower farme
 
 <h2 id="screenshots">⚙ Screenshots</h2>
 <h4>Login Page</h4>
-<img src="snaps/Login.png" alt="Login Page" width="800">
+<img src="snaps/login.png" alt="Login Page" width="800">
 <h4>Home Page</h4>
 <img src="snaps/home.png" alt="Home Page" width="800">
 <h4>Features Page</h4>
