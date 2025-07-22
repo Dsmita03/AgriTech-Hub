@@ -146,12 +146,13 @@ const CropRecommendation = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                   {data.recommendations?.length > 0 ? (
                     data.recommendations.map((crop, index) => (
+                      console.log(crop),
                       <div
                         key={index}
                         className="bg-white rounded-xl shadow-lg p-5 flex flex-col items-center text-center hover:shadow-2xl transition-transform duration-300 hover:scale-105"
                       >
                         <img
-                          src={crop.image || "/crops/crop.crop.jpg"}
+                          src={`/crops/${crop.crop}.png`}
                           alt={crop.crop}
                           className="w-24 h-24 object-cover rounded-full shadow-md border border-green-300"
                         />
