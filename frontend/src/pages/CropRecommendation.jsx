@@ -30,16 +30,18 @@ const CropRecommendation = () => {
     setData(null);
 
     try {
-      // ⏳ Abort if response takes too long
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => controller.abort("timeout"), 12000); // ⏱️ Increased timeout to 12 seconds
 
-      const response = await fetch("https://agritech-hub-b8if.onrender.com/api/crop-recommendation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ location: trimmed }),
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        "https://agritech-hub-b8if.onrender.com/api/crop-recommendation",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ location: trimmed }),
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeout);
 
@@ -53,7 +55,11 @@ const CropRecommendation = () => {
       }
     } catch (err) {
       console.error("API error:", err);
-      setError("⏱️ Request timed out or server is unreachable.");
+      if (err.name === "AbortError") {
+        setError("⏱️ Request timed out. Please try again later.");
+      } else {
+        setError("❌ Something went wrong while fetching the data.");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,7 +75,7 @@ const CropRecommendation = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-      ></div>
+      />
 
       {/* Right: Input & Data */}
       <div className="lg:w-1/2 w-full flex flex-col justify-center items-center min-h-screen ml-auto p-10">
@@ -105,7 +111,7 @@ const CropRecommendation = () => {
               </div>
             )}
 
-            {/* Skeleton Loader */}
+            {/* Loading Skeleton */}
             {loading && (
               <div className="mt-10 grid grid-cols-2 gap-4 animate-pulse">
                 {[...Array(4)].map((_, i) => (
@@ -114,12 +120,11 @@ const CropRecommendation = () => {
               </div>
             )}
 
-            {/* Data Rendered */}
+            {/* Weather + Soil + Crop Display */}
             {data && !loading && (
               <div className="mt-10 p-6 bg-green-50 rounded-2xl shadow-md">
                 <h2 className="text-3xl font-extrabold text-green-700 text-center mb-6">🌦️ Weather & Soil Data</h2>
 
-                {/* Weather + Soil Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
                   {[
                     { icon: <FaTemperatureHigh className="text-green-500" />, label: "Temperature", value: data.temperature },
@@ -146,7 +151,6 @@ const CropRecommendation = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                   {data.recommendations?.length > 0 ? (
                     data.recommendations.map((crop, index) => (
-                      console.log(crop),
                       <div
                         key={index}
                         className="bg-white rounded-xl shadow-lg p-5 flex flex-col items-center text-center hover:shadow-2xl transition-transform duration-300 hover:scale-105"
@@ -158,7 +162,7 @@ const CropRecommendation = () => {
                         />
                         <h4 className="font-bold text-green-800 mt-3 text-lg">{crop.crop}</h4>
                         <p className="text-sm text-gray-600 mt-2">
-                          <strong>📖 Method: </strong>{crop.method}
+                          <strong>📖 Method:</strong> {crop.method}
                         </p>
                       </div>
                     ))
