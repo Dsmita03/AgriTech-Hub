@@ -5,18 +5,25 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { preprocessImage } from "../utils/preprocess.js";
 
-const router = express.Router();
+// Setup for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Multer setup for handling image uploads (stores files in memory)
-const upload = multer({ storage: multer.memoryStorage() });
+const router = express.Router();
 
-// ✅ Declare `model` and loading state globally
-let model = null;
-let isModelLoaded = false;
+// Multer middleware: store in memory, accept only images, 5MB limit
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed!"), false);
+    }
+    cb(null, true);
+  },
+});
 
-// ✅ CLASS_NAMES for plant diseases
+// Plant disease class labels
 const CLASS_NAMES = [
   "Apple___Apple_scab", "Apple___Black_rot", "Apple___Cedar_apple_rust", "Apple___healthy",
   "Blueberry___healthy", "Cherry_(including_sour)___Powdery_mildew", "Cherry_(including_sour)___healthy",
@@ -33,71 +40,82 @@ const CLASS_NAMES = [
   "Tomato___Tomato_Yellow_Leaf_Curl_Virus", "Tomato___Tomato_mosaic_virus", "Tomato___healthy"
 ];
 
-// ✅ Load the Model (Ensures Model is Ready Before Handling Requests)
+// Efficient, atomic model loading and caching
+let model = null;
+let modelLoadPromise = null;
+
 const loadModel = async () => {
-  try {
+  if (!modelLoadPromise) {
     const modelPath = `file://${path.join(__dirname, "..", "model", "tfjs_model", "model.json")}`;
-    console.log(`🔍 Loading model from: ${modelPath}`);
-
-    model = await tf.loadLayersModel(modelPath);
-    isModelLoaded = true; // ✅ Mark model as loaded
-
-    console.log("✅ Model successfully loaded and initialized!");
-  } catch (error) {
-    console.error("❌ Error loading model:", error);
+    console.log(`Loading model from: ${modelPath}`);
+    modelLoadPromise = tf.loadLayersModel(modelPath)
+      .then(loaded => {
+        model = loaded;
+        console.log("Model successfully loaded.");
+      })
+      .catch(error => {
+        modelLoadPromise = null;
+        console.error("Model load failed:", error);
+        throw error;
+      });
   }
+  return modelLoadPromise;
 };
 
-// ✅ Call `loadModel()` on startup
-loadModel();
-
-// ✅ Prediction Route (Supports Multiple Requests)
-router.post("/predict", upload.single("file"), async (req, res) => {
-  if (!isModelLoaded) {
-    return res.status(503).json({ error: "❌ Model is still loading. Please try again later." });
-  }
-
-  if (!req.file) {
-    return res.status(400).json({ error: "❌ No image uploaded. Please upload a valid image file." });
-  }
-
-  console.log("✅ Image received for prediction.");
-
-  let processedImage = null;
-
+// Health check endpoint
+router.get("/healthz", async (req, res) => {
   try {
-    // ✅ Preprocess Image
-    processedImage = await preprocessImage(req.file.buffer);
-    processedImage = processedImage.reshape([1, 224, 224, 3]); // Ensure correct input shape
-    console.log("✅ Image preprocessed:", processedImage.shape);
+    await loadModel();
+    res.status(200).json({ status: "ok", model: "loaded" });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: "Model loading failed." });
+  }
+});
 
-    // ✅ Make Prediction using `tf.tidy()` (Ensures Cleanup)
+// Prediction endpoint
+router.post("/predict", upload.single("file"), async (req, res, next) => {
+  try {
+    await loadModel();
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded. Please include a file." });
+    }
+
+    console.log("Image received. Preprocessing...");
+    const processedImage = await preprocessImage(req.file.buffer);
+
+    // Shape is [1, 224, 224, 3], safe for prediction
     const predictionArray = tf.tidy(() => {
-      const predictions = model.predict(processedImage).softmax(); // ✅ Apply softmax
-      return predictions.arraySync(); // ✅ Convert tensor to array BEFORE disposal
+      const predictions = model.predict(processedImage);
+      const softmaxed = tf.softmax(predictions);
+      return softmaxed.arraySync();
     });
 
-    // ✅ Get the Most Probable Class
-    const predictedClassIndex = predictionArray[0].indexOf(Math.max(...predictionArray[0]));
-    const confidence = (Math.max(...predictionArray[0]) * 100).toFixed(2);
+    const probabilities = predictionArray[0];
+    const maxProb = Math.max(...probabilities);
+    const predictedIndex = probabilities.indexOf(maxProb);
 
-    console.log(`🧪 Predicted Disease: ${CLASS_NAMES[predictedClassIndex]} | Confidence: ${confidence}`);
+    const response = {
+      disease: CLASS_NAMES[predictedIndex],
+      confidence: parseFloat((maxProb * 100).toFixed(2)),
+    };
 
-    return res.json({
-      disease: CLASS_NAMES[predictedClassIndex],
-      confidence: `${confidence}`
-    });
+    console.log(`Prediction: ${response.disease} (${response.confidence}%)`);
+    res.json(response);
+
+    processedImage.dispose();
 
   } catch (error) {
-    console.error("❌ Error during prediction:", error);
-    return res.status(500).json({ error: "❌ Prediction failed. Please try again." });
-
-  } finally {
-    // ✅ Dispose of processedImage ONLY if it's defined
-    if (processedImage) {
-      processedImage.dispose();
-    }
+    console.error("Prediction error:", error);
+    next(error);
   }
+});
+
+// Central error handler
+router.use((err, req, res, next) => {
+  const message = err.message || "An unexpected error occurred.";
+  const code = err.status || 500;
+  res.status(code).json({ error: message });
 });
 
 export default router;

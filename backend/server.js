@@ -1,48 +1,54 @@
+// server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
-import { fileURLToPath } from "url";   
 import multer from "multer";  
+import { fileURLToPath } from "url";
+
 import * as tf from "@tensorflow/tfjs-node";
+
+// Routes
 import cropRoutes from "./routes/cropRoutes.js";
 import weatherRoutes from "./routes/weatherRoutes.js";
 import forumRoutes from "./routes/forum.js";
 import diseaseRoutes from "./routes/disease.js";
 import schemeRoutes from "./routes/schemeRoutes.js";
-import { preprocessImage } from "./utils/preprocess.js"; // Ensure this function exists
 
-// Load environment variables
+// Initialize environment variables
 dotenv.config();
 
-// Get the directory name in ES module scope
+// Resolve __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log("📁 Current __dirname:", __dirname);
-
-// Initialize Express app
+// Initialize Express App
 const app = express();
-app.use(cors());
-app.use(express.json()); 
 
-// Serve TensorFlow.js model files (if needed for frontend access)
+app.use(cors());
+app.use(express.json());
+app.use(express.static("dist")); // Optional: frontend build folder
+
+// Serve model files if needed on frontend
 app.use('/model', express.static(path.join(__dirname, 'model')));
-app.use(express.static("dist"));
- 
-// Multer setup for handling image uploads
+
+// Multer setup (memory storage)
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ✅ API Routes (No model loading here)
+// === API ROUTES ===
 app.use("/api/crop-recommendation", cropRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/forum", forumRoutes);
-app.use("/api/disease", diseaseRoutes); // Model loading happens inside disease.js
-app.use("/api/schemes", schemeRoutes);
+app.use("/api/disease", diseaseRoutes);   // TensorFlow image model used here
+app.use("/api/schemes", schemeRoutes);    // Government scheme list from your DB or static JSON
 
-// ✅ Root Route
-app.get("/", (req, res) => res.send("✅ Server is running!"));
+// Root route
+app.get("/", (req, res) => {
+  res.send("✅ Server is running!");
+});
 
-// ✅ Start Server
+// Start Server
 const PORT = process.env.PORT || 5002;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});

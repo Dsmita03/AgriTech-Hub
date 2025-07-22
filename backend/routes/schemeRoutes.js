@@ -1,8 +1,9 @@
+// routes/schemes.js
 import express from "express";
 
 const router = express.Router();
 
-// ✅ Government Schemes Data
+// Government Schemes Data
 const schemesData = {
   en: [
     {
@@ -224,10 +225,17 @@ const schemesData = {
     },
   ],
 };
-
-// ✅ API Endpoint to Fetch Schemes
+// Endpoint
 router.get("/", (req, res) => {
   const { language } = req.query;
+
+  // Validate supported language
+  if (!["en", "hi", "bn"].includes(language)) {
+    return res.status(400).json({ error: "Unsupported language. Use ?language=en|hi|bn" });
+  }
+
+  // Optional: Add cache headers for performance
+  res.set("Cache-Control", "public, max-age=86400"); // 1 day
   res.status(200).json(schemesData[language] || []);
 });
 
