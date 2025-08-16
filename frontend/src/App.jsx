@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";  
 import { Toaster } from "sonner";
-
+import ResetPassword from "./pages/ResetPassword";
 import LandingLayout from "./Layout/LandingLayout";
 import CropRecommendation from "./pages/CropRecommendation";
 import DiseaseDetection from "./pages/DiseaseDetection";
@@ -30,6 +30,8 @@ function App() {
         {/* Auth */}
         <Route path="/" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ResetPassword />} />
+
 
         {/* Dashboard layout route (optional content inside LandingLayout) */}
         <Route path="/dashboard" element={<LandingLayout />} />
