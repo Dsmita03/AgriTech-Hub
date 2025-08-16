@@ -211,7 +211,7 @@ const LandingLayout = () => {
               <div className="rounded-2xl border border-emerald-200 bg-white/95 p-6 shadow-sm">
                 <div className="flex items-center gap-3">
                   <img
-                    src="/src/assets/Ravi.png"
+                    src="/assets/Ravi.png"
                     alt="Ravi Kumar"
                     className="h-10 w-10 rounded-full object-cover ring-2 ring-emerald-100"
                     loading="lazy"
@@ -230,7 +230,7 @@ const LandingLayout = () => {
               <div className="rounded-2xl border border-emerald-200 bg-white/95 p-6 shadow-sm">
                 <div className="flex items-center gap-3">
                   <img
-                    src="/src/assets/Priya.png"
+                    src="/assets/Priya.png"
                     alt="Priya Sen"
                     className="h-10 w-10 rounded-full object-cover ring-2 ring-emerald-100"
                     loading="lazy"
@@ -249,7 +249,7 @@ const LandingLayout = () => {
               <div className="rounded-2xl border border-emerald-200 bg-white/95 p-6 shadow-sm">
                 <div className="flex items-center gap-3">
                   <img
-                    src="/src/assets/Arun.png"
+                    src="/assets/Arun.png"
                     alt="Arun Pillai"
                     className="h-10 w-10 rounded-full object-cover ring-2 ring-emerald-100"
                     loading="lazy"
