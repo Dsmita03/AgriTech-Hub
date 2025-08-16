@@ -4,23 +4,31 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { FaTemperatureHigh, FaCloudRain, FaSun, FaLeaf } from "react-icons/fa";
-import FarmingImage from "@/assets/Forum.png";
 
 const CropRecommendation = () => {
   const [location, setLocation] = useState("");
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(null); // API response
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const cacheRef = useRef({}); // Store responses by location
+  const cacheRef = useRef({}); // in-memory cache by normalized location
+
+  const safeVal = (v) => (v !== undefined && v !== null ? v : "N/A");
+
+  const onImageError = (e) => {
+    e.currentTarget.src = "/images/default-crop.png"; // ensure this exists
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmed = location.trim().toLowerCase();
+    if (!trimmed) {
+      setError("⚠️ Please enter a valid location.");
+      return;
+    }
 
-    if (!trimmed) return setError("⚠️ Please enter a valid location.");
-
-    // ⚡ Use cached data if available
+    // Use cached result
     if (cacheRef.current[trimmed]) {
+      setError("");
       setData(cacheRef.current[trimmed]);
       return;
     }
@@ -31,8 +39,7 @@ const CropRecommendation = () => {
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort("timeout"), 12000); // ⏱️ Increased timeout to 12 seconds
-
+      const timeout = setTimeout(() => controller.abort("timeout"), 12_000);
       const response = await fetch(
         "https://agritech-hub-b8if.onrender.com/api/crop-recommendation",
         {
@@ -42,7 +49,6 @@ const CropRecommendation = () => {
           signal: controller.signal,
         }
       );
-
       clearTimeout(timeout);
 
       const result = await response.json();
@@ -55,7 +61,7 @@ const CropRecommendation = () => {
       }
     } catch (err) {
       console.error("API error:", err);
-      if (err.name === "AbortError") {
+      if (err?.name === "AbortError") {
         setError("⏱️ Request timed out. Please try again later.");
       } else {
         setError("❌ Something went wrong while fetching the data.");
@@ -65,116 +71,183 @@ const CropRecommendation = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen flex lg:flex-row flex-col items-center justify-center p-0">
-      {/* Left: Image Section */}
-      <div
-        className="hidden lg:flex w-1/2 h-screen bg-cover bg-center fixed left-0 top-0"
-        style={{
-          backgroundImage: `url(${FarmingImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
+  const isEmptyState = !loading && !data && !error;
 
-      {/* Right: Input & Data */}
-      <div className="lg:w-1/2 w-full flex flex-col justify-center items-center min-h-screen ml-auto p-10">
-        <h1 className="text-5xl font-extrabold text-green-700 text-center mb-6 animate-fade-in">
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-emerald-50/60">
+      {/* Hero Header */}
+      <section className="container mx-auto px-4 pt-10 pb-6 text-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-emerald-700 tracking-tight">
           🌱 Smart Crop Recommendation
         </h1>
+        <p className="mt-3 text-slate-700 max-w-2xl mx-auto">
+          Get personalized crop suggestions based on live weather and heuristic soil data for your location.
+        </p>
 
-        <Card className="w-full max-w-2xl shadow-xl border border-green-400 bg-white rounded-3xl transition-all duration-500 p-8">
-          <CardContent className="p-8 space-y-8">
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Creative empty-state only: soft illustration panel */}
+        {isEmptyState && (
+          <div className="mt-6 mx-auto max-w-3xl">
+            <div className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-100 p-6">
+              {/* Decorative “fields” stripes */}
+              <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:repeating-linear-gradient(45deg,theme(colors.emerald.600)/10_0_10px,transparent_10px_20px)]" />
+              <div className="relative z-10">
+                <h3 className="text-xl font-semibold text-emerald-800">
+                  Start by entering a location
+                </h3>
+                <p className="mt-1 text-slate-700">
+                  Example: Delhi, Bengaluru, Mumbai, Chennai.
+                </p>
+                <p className="mt-2 text-sm text-emerald-900/80">
+                  Tip: Accurate city names improve weather matching and better crop suggestions.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Input Panel */}
+      <section className="container mx-auto px-4 mb-8">
+        <Card className="max-w-3xl mx-auto rounded-3xl border border-emerald-200 bg-white/95 shadow-lg">
+          <CardContent className="p-5 md:p-7">
+            <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-3 md:gap-4">
               <Input
                 type="text"
-                placeholder="🌍 Enter your location (e.g., Delhi, Bengaluru)"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
+                placeholder="🌍 Enter your location (e.g., Delhi, Bengaluru)"
                 required
-                className="border border-green-500 focus:ring-green-500 py-4 px-5 w-full text-lg rounded-2xl shadow-md bg-green-50"
+                aria-label="Enter location for crop recommendation"
+                className="flex-1 py-3 md:py-4 bg-emerald-50 border border-emerald-300 focus:ring-emerald-500 rounded-xl"
               />
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-green-700 hover:bg-green-800 text-white transition-all duration-300 py-3 text-lg rounded-xl shadow-lg flex justify-center items-center gap-2"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-5 md:px-6 py-3 md:py-4 flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="animate-spin w-6 h-6" /> : "🌾 Get Crop Recommendation"}
+                {loading ? <Loader2 className="animate-spin w-5 h-5" /> : "🌾 Get Recommendation"}
               </Button>
             </form>
 
+            {/* Tiny tip only in empty state */}
+            {isEmptyState && (
+              <div className="mt-3 text-center text-sm text-slate-600">
+                Or try nearby cities if spelling variations occur.
+              </div>
+            )}
+
             {/* Error */}
             {error && (
-              <div className="mt-6 p-4 bg-red-100 text-red-700 rounded-2xl shadow-md text-center">
-                <p>{error}</p>
+              <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700 text-center">
+                {error}
               </div>
             )}
 
             {/* Loading Skeleton */}
             {loading && (
-              <div className="mt-10 grid grid-cols-2 gap-4 animate-pulse">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-green-100 h-20 rounded-2xl shadow-inner" />
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 animate-pulse">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-16 rounded-xl bg-emerald-100" />
                 ))}
-              </div>
-            )}
-
-            {/* Weather + Soil + Crop Display */}
-            {data && !loading && (
-              <div className="mt-10 p-6 bg-green-50 rounded-2xl shadow-md">
-                <h2 className="text-3xl font-extrabold text-green-700 text-center mb-6">🌦️ Weather & Soil Data</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
-                  {[
-                    { icon: <FaTemperatureHigh className="text-green-500" />, label: "Temperature", value: data.temperature },
-                    { icon: <FaSun className="text-yellow-500" />, label: "Latitude", value: `${data.latitude}°` },
-                    { icon: <FaSun className="text-yellow-500" />, label: "Longitude", value: `${data.longitude}°` },
-                    { icon: <FaCloudRain className="text-blue-500" />, label: "Rainfall", value: data.rainfall },
-                    { icon: <FaLeaf className="text-green-600" />, label: "Humidity", value: data.humidity },
-                    { icon: <FaLeaf className="text-green-600" />, label: "pH Level", value: data.soil?.ph },
-                    { icon: <FaLeaf className="text-green-600" />, label: "Organic Carbon", value: data.soil?.organicCarbon },
-                    { icon: <FaLeaf className="text-green-600" />, label: "Nitrogen", value: data.soil?.nitrogen },
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center gap-3 bg-green-100 p-4 rounded-xl shadow-sm border border-green-300">
-                      {item.icon}
-                      <p className="text-lg font-medium">
-                        <strong>{item.label}:</strong>{" "}
-                        {item.value !== undefined && item.value !== null ? item.value : "N/A"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Crop Recommendations */}
-                <h3 className="text-3xl font-bold text-green-700 mt-10 text-center">🌾 Recommended Crops</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                  {data.recommendations?.length > 0 ? (
-                    data.recommendations.map((crop, index) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-xl shadow-lg p-5 flex flex-col items-center text-center hover:shadow-2xl transition-transform duration-300 hover:scale-105"
-                      >
-                        <img
-                          src={`/crops/${crop.crop}.png`}
-                          alt={crop.crop}
-                          className="w-24 h-24 object-cover rounded-full shadow-md border border-green-300"
-                        />
-                        <h4 className="font-bold text-green-800 mt-3 text-lg">{crop.crop}</h4>
-                        <p className="text-sm text-gray-600 mt-2">
-                          <strong>📖 Method:</strong> {crop.method}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-600 col-span-full text-center">No crop recommendations available.</p>
-                  )}
-                </div>
               </div>
             )}
           </CardContent>
         </Card>
-      </div>
+      </section>
+
+      {/* Results */}
+      {data && !loading && (
+        <section className="container mx-auto px-4 pb-12">
+          {/* Overview */}
+          <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-3">
+            <Card className="rounded-2xl border border-emerald-200 bg-white/95 shadow">
+              <CardContent className="p-5">
+                <h2 className="text-lg font-semibold text-emerald-800">Overview</h2>
+                <div className="mt-3 space-y-1 text-slate-700">
+                  <p>
+                    <span className="font-medium text-slate-900">Location:</span> {data.location || "N/A"}
+                  </p>
+                  <p>
+                    <span className="font-medium text-slate-900">Coordinates:</span>{" "}
+                    {safeVal(data.latitude)}°, {safeVal(data.longitude)}°
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl border border-emerald-200 bg-white/95 shadow md:col-span-2">
+              <CardContent className="p-5">
+                <h2 className="text-lg font-semibold text-emerald-800">Weather & Soil Snapshot</h2>
+                <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { icon: <FaTemperatureHigh className="text-emerald-600" />, label: "Temperature", value: safeVal(data.temperature) },
+                    { icon: <FaLeaf className="text-emerald-600" />, label: "Humidity", value: safeVal(data.humidity) },
+                    { icon: <FaCloudRain className="text-blue-500" />, label: "Rainfall", value: safeVal(data.rainfall) },
+                    { icon: <FaLeaf className="text-emerald-700" />, label: "pH", value: safeVal(data.soil?.ph) },
+                    { icon: <FaLeaf className="text-emerald-700" />, label: "Organic C", value: safeVal(data.soil?.organicCarbon) },
+                    { icon: <FaLeaf className="text-emerald-700" />, label: "Nitrogen", value: safeVal(data.soil?.nitrogen) },
+                    { icon: <FaSun className="text-amber-500" />, label: "Latitude", value: `${safeVal(data.latitude)}°` },
+                    { icon: <FaSun className="text-amber-500" />, label: "Longitude", value: `${safeVal(data.longitude)}°` },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-white p-3">
+                      {item.icon}
+                      <div className="text-sm">
+                        <div className="font-semibold text-slate-900">{item.label}</div>
+                        <div className="text-slate-700">{item.value}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recommended Crops */}
+          <div className="max-w-6xl mx-auto mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-emerald-700">🌾 Recommended Crops</h2>
+            </div>
+
+            {data.recommendations?.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {data.recommendations.map((crop, idx) => {
+                  const src = `/crops/${crop.crop}.png`;
+                  return (
+                    <Card
+                      key={`${crop.crop}-${idx}`}
+                      className="rounded-2xl border border-emerald-200 bg-white/95 shadow hover:shadow-md transition"
+                    >
+                      <CardContent className="p-5">
+                        <div className="flex flex-col items-center text-center">
+                          <img
+                            src={src}
+                            alt={crop.crop}
+                            onError={onImageError}
+                            className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border border-emerald-200 shadow"
+                          />
+                          <h3 className="mt-3 text-lg font-bold text-emerald-800">{crop.crop}</h3>
+                          {typeof crop.suitabilityScore === "number" && (
+                            <span className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Suitability: {crop.suitabilityScore}/6
+                            </span>
+                          )}
+                          <p className="mt-3 text-sm text-slate-600 line-clamp-3">
+                            <strong>📖 Method:</strong> {crop.method || "N/A"}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-600">
+                No crop recommendations available.
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

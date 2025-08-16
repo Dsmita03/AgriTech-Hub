@@ -1,52 +1,65 @@
-import { db } from "../config/firebase.js";
-import { doc, setDoc, getDoc } from "firebase/firestore";  
 import express from "express";
+import admin from "firebase-admin";
+import { db } from "../config/firebase.js"; // should export admin.firestore()
 
 const router = express.Router();
 
-// ✅ API Route - Check if Weather API is Working
+// router.use(express.json());
+
 router.get("/", (req, res) => {
   res.send("Weather API is working!");
 });
 
-// ✅ Function to Save Last Searched City in Firebase
-const saveLastCity = async (cityName) => {
-  try {
-    await setDoc(doc(db, "users", "lastCity"), { city: cityName });
-    console.log(`Last searched city saved: ${cityName}`);
-  } catch (error) {
-    console.error("Error saving city:", error);
-  }
-};
+const DOC_REF = db.collection("users").doc("lastCity");
+const MAX_CITY_LEN = 120;
 
-// ✅ Function to Retrieve Last Searched City from Firebase
-const getLastCity = async (req, res) => {
+const normalizeCity = (v) => (typeof v === "string" ? v.trim() : "");
+const isValidCity = (v) => v && v.length <= MAX_CITY_LEN;
+
+// Save last city
+async function saveLastCity(city) {
+  await DOC_REF.set(
+    {
+      city,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+  console.log(`Last searched city saved: ${city}`);
+}
+
+// Get last city
+async function getLastCity(req, res) {
   try {
-    const docSnap = await getDoc(doc(db, "users", "lastCity"));
-    if (docSnap.exists()) {
-      res.json({ lastCity: docSnap.data().city });
-    } else {
-      res.status(404).json({ message: "No last searched city found" });
+    const snap = await DOC_REF.get();
+    if (!snap.exists) {
+      return res.status(404).json({ message: "No last searched city found" });
     }
+    const data = snap.data() || {};
+    return res.json({
+      lastCity: data.city ?? null,
+      updatedAt: data.updatedAt?.toDate?.() ?? null,
+    });
   } catch (error) {
     console.error("Error fetching last city:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
-};
+}
 
-// ✅ Route to Get Last Searched City
 router.get("/last-city", getLastCity);
 
-// ✅ Route to Save Last Searched City
 router.post("/save-city", async (req, res) => {
-  const { city } = req.body;
-  if (!city) {
-    return res.status(400).json({ error: "City name is required" });
+  try {
+    const city = normalizeCity(req.body?.city);
+    if (!isValidCity(city)) {
+      return res.status(400).json({ error: `City name is required and must be <= ${MAX_CITY_LEN} chars` });
+    }
+    await saveLastCity(city);
+    return res.json({ message: "City saved successfully" });
+  } catch (error) {
+    console.error("Error saving city:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
-  
-  await saveLastCity(city);
-  res.json({ message: "City saved successfully" });
 });
 
-// ✅ Export the Router
 export default router;

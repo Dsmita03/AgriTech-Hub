@@ -63,7 +63,7 @@ export default function SignIn() {
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
             <blockquote className="space-y-2">
-              <p className="text-lg font-medium">"Sustainable farming isn't just about growing crops, it's about nurturing the future."</p>
+              <p className="text-lg font-medium">&quot;Sustainable farming isn&apos;t just about growing crops, it&apos;s about nurturing the future.&quot;</p>
               <footer className="text-sm">- Modern Farming Initiative</footer>
             </blockquote>
           </div>
@@ -129,7 +129,7 @@ export default function SignIn() {
                 </Button>
 
                 <p className="text-center text-sm text-muted-foreground">
-                  Don't have an account?{" "}
+                  Don&apos;t have an account?{" "}
                   <Link to="/signup" className="text-green-600 hover:underline">
                     Sign up
                   </Link>

@@ -3,9 +3,12 @@ import express from "express";
 
 const router = express.Router();
 
-// Government Schemes Data
-const schemesData = {
-  en: [
+// Supported languages
+const SUPPORTED_LANGS = ["en", "hi", "bn"];
+
+// Government Schemes Data (frozen to prevent accidental mutation)
+const schemesData = Object.freeze({
+  en: Object.freeze([
     {
       name: "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
       description: "A scheme providing income support of ₹6,000 per year to all farmer families.",
@@ -76,10 +79,8 @@ const schemesData = {
       benefits: "Training and funding for technology adoption",
       apply_link: "https://atmaaims.com/",
     },
-  ],
-
-
-  hi: [
+  ]),
+  hi: Object.freeze([
     {
       name: "प्रधानमंत्री किसान सम्मान निधि (PM-KISAN)",
       description: "₹6,000 प्रति वर्ष की आय सहायता सभी किसान परिवारों को प्रदान करने की योजना।",
@@ -107,7 +108,6 @@ const schemesData = {
       eligibility: "राज्य सरकारें और किसान",
       benefits: "कृषि विकास परियोजनाओं के लिए वित्तीय सहायता",
       apply_link: "https://rkvy.nic.in/",
-
     },
     {
       name: "राष्ट्रीय कृषि बाजार (e-NAM)",
@@ -151,8 +151,8 @@ const schemesData = {
       benefits: "प्रशिक्षण और तकनीकी अनुदान",
       apply_link: "https://atmaaims.com/",
     },
-  ],
-  bn: [
+  ]),
+  bn: Object.freeze([
     {
       name: "প্রধানমন্ত্রী কিষান সম্মান নিধি (PM-KISAN)",
       description: "₹6,000 আয় সহায়তা প্রদান করার জন্য একটি কেন্দ্রীয় প্রকল্প।",
@@ -223,20 +223,67 @@ const schemesData = {
       benefits: "প্রশিক্ষণ এবং প্রযুক্তি গ্রহণের জন্য অর্থায়ন",
       apply_link: "https://atmaaims.com/",
     },
-  ],
-};
-// Endpoint
-router.get("/", (req, res) => {
-  const { language } = req.query;
+  ]),
+});
 
-  // Validate supported language
-  if (!["en", "hi", "bn"].includes(language)) {
+// Basic metadata
+const DATA_LAST_MODIFIED = new Date("2025-01-01T00:00:00Z"); // update when data changes
+
+// Helper: negotiate language or default to 'en'
+function resolveLanguage(qsLang, acceptLanguageHeader) {
+  const raw = (qsLang ?? "").toString().trim().toLowerCase();
+  if (SUPPORTED_LANGS.includes(raw)) return raw;
+
+  // Optional: try Accept-Language if query is missing/invalid
+  if (!raw && acceptLanguageHeader) {
+    const preferred = acceptLanguageHeader.split(",")
+      .map(x => x.trim().toLowerCase().split(";")[0])
+      .find(code => SUPPORTED_LANGS.includes(code));
+    if (preferred) return preferred;
+  }
+
+  // Fallback
+  return "en";
+}
+
+// Languages listing endpoint (optional)
+router.get("/languages", (req, res) => {
+  res.set("Cache-Control", "public, max-age=86400");
+  res.status(200).json({ supported: SUPPORTED_LANGS });
+});
+
+// Main endpoint
+router.get("/", (req, res) => {
+  const lang = resolveLanguage(req.query.language, req.headers["accept-language"]);
+
+  // Prepare caching headers
+  const etag = `"schemes-${lang}-${DATA_LAST_MODIFIED.getTime()}"`;
+  res.set({
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "public, max-age=86400",
+    "ETag": etag,
+    "Last-Modified": DATA_LAST_MODIFIED.toUTCString(),
+  });
+
+  // Conditional GET
+  if (req.headers["if-none-match"] === etag || req.headers["if-modified-since"] === DATA_LAST_MODIFIED.toUTCString()) {
+    return res.status(304).end();
+  }
+
+  // If an explicit but unsupported language was provided, return 400
+  const requested = (req.query.language ?? "").toString().trim().toLowerCase();
+  if (requested && !SUPPORTED_LANGS.includes(requested)) {
+    // Prevent caching of error responses
+    res.set("Cache-Control", "no-store");
     return res.status(400).json({ error: "Unsupported language. Use ?language=en|hi|bn" });
   }
 
-  // Optional: Add cache headers for performance
-  res.set("Cache-Control", "public, max-age=86400"); // 1 day
-  res.status(200).json(schemesData[language] || []);
+  const payload = schemesData[lang] || [];
+  res.status(200).json({
+    language: lang,
+    count: payload.length,
+    items: payload,
+  });
 });
 
 export default router;

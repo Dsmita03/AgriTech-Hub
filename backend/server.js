@@ -6,6 +6,8 @@ import path from "path";
 import multer from "multer";  
 import { fileURLToPath } from "url";
 
+// If you actually use TensorFlow in routes, keep this import.
+// If not, consider lazy-importing inside the disease route to reduce startup cost.
 import * as tf from "@tensorflow/tfjs-node";
 
 // Routes
@@ -27,15 +29,20 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("dist")); // Optional: frontend build folder
 
-// Serve model files if needed on frontend
-app.use('/model', express.static(path.join(__dirname, 'model')));
+// Serve frontend build (adjust "dist" if your build folder is different)
+app.use(express.static(path.join(__dirname, "dist")));
 
-// Multer setup (memory storage)
+// Serve model files if the frontend needs to fetch them
+app.use("/model", express.static(path.join(__dirname, "model")));
+
+// Multer setup (memory storage) — only keep if you need in-memory uploads
 const upload = multer({ storage: multer.memoryStorage() });
 
-// === API ROUTES ===
+// = API ROUTES =
+// If any route needs `upload`, pass it to that router or use per-endpoint, e.g.:
+// app.post("/api/disease/predict", upload.single("image"), diseasePredictHandler);
+
 app.use("/api/crop-recommendation", cropRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/forum", forumRoutes);
@@ -45,6 +52,12 @@ app.use("/api/schemes", schemeRoutes);    // Government scheme list from your DB
 // Root route
 app.get("/", (req, res) => {
   res.send("✅ Server is running!");
+});
+
+// Basic error handler (put after routes)
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ error: "Internal Server Error" });
 });
 
 // Start Server

@@ -4,9 +4,9 @@
 AgriTech-Hub is an advanced agriculture-based platform designed to empower farmers and agricultural professionals with real-time insights, smart recommendations, and a collaborative knowledge-sharing space. It integrates AI, real-time data, and community-driven insights to optimize farming practices and improve crop productivity.
 
 ## Features
-- **Interactive Knowledge Hub**: A space for farmers to share knowledge, best practices, and farming techniques.
+- **Interactive Knowledge Hub**:A space for farmers to share knowledge, best practices, and farming techniques.
 - **Crop Recommendation System**: Provides crop suggestions based on soil quality, weather conditions, and user preferences.
-- **Smart Weather Updates**: Delivers real-time and location-based weather information.
+- **Smart Weather Updates with Map**: Real-time, location-based weather information displayed alongside an interactive map for visual context.
 - **Plant Disease Detection**: AI-powered tool to detect plant diseases through image analysis.
 - **Localized Language Support**: Available in English, Hindi, and Bengali using React-i18next.
 - **Community Forum**: Enables discussions, problem-solving, and idea-sharing among users.
@@ -21,17 +21,22 @@ AgriTech-Hub is an advanced agriculture-based platform designed to empower farme
 <img src="snaps/features.png" alt="Features Page" width="800">
 <h4>Plant Disease Detector</h4>
 <img src="snaps/plant.png" alt="Plant" width="800">
+<h4>Smart Weather Update</h4>
+<img src="snaps/map.png" alt="Weather" width="800">
+
 
 ## Tech Stack
 ### Frontend
 - **Framework**: React (Vite) with Tailwind CSS
-- **State Management**: Context API / Redux (if required)
+- **Routing**: React Router
+- **State Management**: Context API  
+- **Maps**: React-Leaflet + Leaflet for weather map
 - **Localization**: React-i18next
-- **PWA Support**: Enabled for offline access
+ 
 
 ### Backend
 - **Framework**: Node.js with Express.js
-- **Database**: Firebase (for user data and preferences)
+- **Database**: Firebase (Firestore via Admin SDK)
 - **APIs Used**:
   - **Soil Data**: SoilGrids API
   - **Weather Updates**: OpenWeather API
@@ -73,18 +78,26 @@ AgriTech-Hub is an advanced agriculture-based platform designed to empower farme
    npm run dev
    ```
 
-## API Endpoints
-- **GET /weather**: Fetches real-time weather updates.
-- **POST /recommend-crop**: Returns crop suggestions based on soil and weather data.
-- **POST /detect-disease**: Processes plant images to detect diseases.
-
-## Future Enhancements
-- AI-driven pest control recommendations.
-- Blockchain-based supply chain tracking for agricultural products.
-- Voice assistant integration for hands-free usage.
-
 ## Contributors
 [![Contributors](https://contrib.rocks/image?repo=Dsmita03/AgriTech-Hub)](https://github.com/Dsmita03/AgriTech-Hub/graphs/contributors)
 
 ---
-Feel free to contribute, suggest improvements, or report issues!
+## Contributing Rules
+Contributions are welcome 😊
+
+- Fork the repo
+
+- Create a feature branch: git checkout -b feat/your-feature
+
+- Commit changes: git commit -m "feat: add your feature"
+
+- Push: git push origin feat/your-feature
+
+- Open a Pull Request
+
+Please follow conventional commits and include screenshots or videos for UI changes.
+
+## 📞 Contact
+ Project Maintainers: <b>Debasmita Sarkar
+  
+ 
