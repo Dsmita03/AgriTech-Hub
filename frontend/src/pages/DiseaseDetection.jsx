@@ -206,7 +206,7 @@ const PlantDiseaseDetector = () => {
                 Disease: <span className="font-semibold">{result.disease || "Unknown"}</span>
               </h3>
               <p className="text-slate-700 text-base mt-1">
-                Confidence: {confidenceText(result.confidence)}
+                Confidence: {confidenceText(result.confidence * 10)}
               </p>
               {/* Optional guidance */}
               <p className="text-slate-600 text-sm mt-2">

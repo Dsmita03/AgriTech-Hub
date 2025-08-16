@@ -98,6 +98,6 @@ Contributions are welcome 😊
 Please follow conventional commits and include screenshots or videos for UI changes.
 
 ## 📞 Contact
- Project Maintainers: <b>Debasmita Sarkar
+ Project Maintainer: <b>Debasmita Sarkar
   
  
