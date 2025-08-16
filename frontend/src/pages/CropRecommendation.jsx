@@ -12,7 +12,8 @@ const CropRecommendation = () => {
   const [error, setError] = useState("");
   const cacheRef = useRef({}); // in-memory cache by normalized location
 
-  const safeVal = (v) => (v !== undefined && v !== null ? v : "N/A");
+const safeVal = (v) => (v !== undefined && v !== null ? v : "N/A");
+
 
   const onImageError = (e) => {
     e.currentTarget.src = "/images/default-crop.png"; // ensure this exists
@@ -228,7 +229,7 @@ const CropRecommendation = () => {
                           <h3 className="mt-3 text-lg font-bold text-emerald-800">{crop.crop}</h3>
                           {typeof crop.suitabilityScore === "number" && (
                             <span className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Suitability: {crop.suitabilityScore}/6
+                              Suitability: {crop.suitabilityScore}/5
                             </span>
                           )}
                           <p className="mt-3 text-sm text-slate-600 line-clamp-3">
