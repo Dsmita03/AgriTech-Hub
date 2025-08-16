@@ -255,7 +255,7 @@ router.get("/languages", (req, res) => {
 // Main endpoint
 router.get("/", (req, res) => {
   const lang = resolveLanguage(req.query.language, req.headers["accept-language"]);
-
+  
   // Prepare caching headers
   const etag = `"schemes-${lang}-${DATA_LAST_MODIFIED.getTime()}"`;
   res.set({
@@ -264,12 +264,12 @@ router.get("/", (req, res) => {
     "ETag": etag,
     "Last-Modified": DATA_LAST_MODIFIED.toUTCString(),
   });
-
-  // Conditional GET
+  
+  // Conditional GET - FIX THESE COMPARISON OPERATORS
   if (req.headers["if-none-match"] === etag || req.headers["if-modified-since"] === DATA_LAST_MODIFIED.toUTCString()) {
     return res.status(304).end();
   }
-
+  
   // If an explicit but unsupported language was provided, return 400
   const requested = (req.query.language ?? "").toString().trim().toLowerCase();
   if (requested && !SUPPORTED_LANGS.includes(requested)) {
@@ -277,7 +277,7 @@ router.get("/", (req, res) => {
     res.set("Cache-Control", "no-store");
     return res.status(400).json({ error: "Unsupported language. Use ?language=en|hi|bn" });
   }
-
+  
   const payload = schemesData[lang] || [];
   res.status(200).json({
     language: lang,

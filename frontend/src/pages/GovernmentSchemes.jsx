@@ -48,7 +48,7 @@ export default function GovernmentSchemes() {
           { signal: controller.signal }
         );
         if (cancelled) return;
-        const items = res.data || [];
+        const items = res.data?.items|| [];
         setSchemes(items);
         setCache((prev) => ({ ...prev, [selectedLanguage]: items }));
       // eslint-disable-next-line no-unused-vars
@@ -71,7 +71,7 @@ export default function GovernmentSchemes() {
           .get(`https://agritech-hub-b8if.onrender.com/api/schemes?language=${code}`)
           .then((res) => {
             if (!cancelled) {
-              setCache((prev) => ({ ...prev, [code]: res.data || [] }));
+              setCache((prev) => ({ ...prev, [code]: res.data?.items || [] }));
             }
           })
           .catch(() => {});
