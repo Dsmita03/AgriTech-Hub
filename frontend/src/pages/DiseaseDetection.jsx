@@ -33,6 +33,7 @@ const PlantDiseaseDetector = () => {
       setNotice({ type: "error", message: "Please select a JPG, PNG, or WebP image." });
       return;
     }
+
     // Validate size
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       setNotice({ type: "error", message: `File too large. Max ${MAX_FILE_SIZE_MB}MB allowed.` });
@@ -55,33 +56,46 @@ const PlantDiseaseDetector = () => {
 
     try {
       const formData = new FormData();
-      formData.append("file", image);
+      formData.append("file", image); // Matches your backend upload.single("file")
 
+      // FIXED: Remove Content-Type header - let browser set it automatically
       const response = await axios.post(
         "https://agritech-hub-b8if.onrender.com/api/disease/predict",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
+        // DON'T set headers for multipart/form-data - axios handles it
       );
 
       setResult(response.data);
       setNotice({ type: "success", message: "Prediction complete." });
+
     } catch (error) {
       console.error("Error uploading image:", error);
-      const msg = error.response?.data?.error || error.message || "Upload failed.";
-      setNotice({ type: "error", message: msg });
+      
+      // Enhanced error handling
+      let errorMessage = "Upload failed. Please try again.";
+      
+      if (error.response) {
+        // Server responded with error status
+        errorMessage = error.response.data?.error || `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage = "Network error. Please check your connection.";
+      } else {
+        // Something else happened
+        errorMessage = error.message || "Unknown error occurred.";
+      }
+      
+      setNotice({ type: "error", message: errorMessage });
     } finally {
       setLoading(false);
     }
   };
 
   const confidenceText = (val) => {
-    // Backend returns percentage already in your previous route (0-100 with toFixed(2)),
-    // but if it returns 0-100 numeric, keep as-is; if 0-1, multiply by 100.
-    // Here we handle both safely.
     if (val == null) return "N/A";
     const num = Number(val);
-    const pct = num <= 1 ? num * 100 : num; // normalize
-    return `${pct.toFixed(2)}%`;
+    // Your backend already returns percentage (0-100), so no conversion needed
+    return `${num.toFixed(2)}%`;
   };
 
   return (
@@ -89,6 +103,7 @@ const PlantDiseaseDetector = () => {
       {/* Left: Form Panel */}
       <div className="flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-xl space-y-6 bg-white/90 backdrop-blur rounded-2xl shadow-lg border border-emerald-200 p-6 md:p-8">
+          
           <div className="text-center">
             <h1 className="text-3xl font-extrabold text-emerald-700 tracking-tight">
               Plant Disease Detector
@@ -128,10 +143,7 @@ const PlantDiseaseDetector = () => {
               className="hidden"
               id="file-upload"
             />
-            <label
-              htmlFor="file-upload"
-              className="cursor-pointer w-full"
-            >
+            <label htmlFor="file-upload" className="cursor-pointer w-full">
               <div className="flex flex-col items-center gap-2 border-2 border-dashed border-emerald-300 hover:border-emerald-400 rounded-xl p-6 transition bg-emerald-50/40">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-700">
                   <UploadCloud size={22} />
@@ -175,12 +187,12 @@ const PlantDiseaseDetector = () => {
                   Analyzing...
                 </>
               ) : (
-                <>Upload & Predict</>
+                "Upload & Predict"
               )}
             </button>
             <button
               onClick={resetAll}
-              disabled={loading && !image}
+              disabled={loading}
               className="px-4 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition"
             >
               Reset
@@ -194,7 +206,7 @@ const PlantDiseaseDetector = () => {
                 Disease: <span className="font-semibold">{result.disease || "Unknown"}</span>
               </h3>
               <p className="text-slate-700 text-base mt-1">
-                Confidence: {confidenceText(result.confidence * 10)}
+                Confidence: {confidenceText(result.confidence)}
               </p>
               {/* Optional guidance */}
               <p className="text-slate-600 text-sm mt-2">
@@ -217,7 +229,7 @@ const PlantDiseaseDetector = () => {
         <div className="absolute inset-0 bg-gradient-to-tr from-emerald-600/20 to-emerald-800/40" />
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white drop-shadow">
           <p className="text-lg font-bold">
-            “Healthy leaves lead to thriving plants.”
+            &quot;Healthy leaves lead to thriving plants.&quot;
           </p>
           <span className="text-sm opacity-90">
             — Agricultural Science Initiative

@@ -1,14 +1,8 @@
-// server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
-import multer from "multer";  
 import { fileURLToPath } from "url";
-
-// If you actually use TensorFlow in routes, keep this import.
-// If not, consider lazy-importing inside the disease route to reduce startup cost.
-import * as tf from "@tensorflow/tfjs-node";
 
 // Routes
 import cropRoutes from "./routes/cropRoutes.js";
@@ -27,37 +21,52 @@ const __dirname = path.dirname(__filename);
 // Initialize Express App
 const app = express();
 
+// Simple CORS configuration
 app.use(cors());
-app.use(express.json());
 
-// Serve frontend build (adjust "dist" if your build folder is different)
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files
 app.use(express.static(path.join(__dirname, "dist")));
-
-// Serve model files if the frontend needs to fetch them
 app.use("/model", express.static(path.join(__dirname, "model")));
 
-// Multer setup (memory storage) — only keep if you need in-memory uploads
-const upload = multer({ storage: multer.memoryStorage() });
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString()
+  });
+});
 
-// = API ROUTES =
-// If any route needs `upload`, pass it to that router or use per-endpoint, e.g.:
-// app.post("/api/disease/predict", upload.single("image"), diseasePredictHandler);
-
+// API Routes
 app.use("/api/crop-recommendation", cropRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/forum", forumRoutes);
-app.use("/api/disease", diseaseRoutes);   // TensorFlow image model used here
-app.use("/api/schemes", schemeRoutes);    // Government scheme list from your DB or static JSON
+app.use("/api/disease", diseaseRoutes);
+app.use("/api/schemes", schemeRoutes);
 
 // Root route
 app.get("/", (req, res) => {
   res.send("✅ Server is running!");
 });
 
-// Basic error handler (put after routes)
+// SPA support - serve index.html for non-API routes
+app.get("*", (req, res) => {
+  if (!req.path.startsWith('/api/')) {
+    res.sendFile(path.join(__dirname, "dist", "index.html"));
+  } else {
+    res.status(404).json({ error: "API endpoint not found" });
+  }
+});
+
+// Enhanced error handler
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
-  res.status(500).json({ error: "Internal Server Error" });
+  console.error("Server error:", err.message);
+  res.status(err.status || 500).json({ 
+    error: err.message || "Internal Server Error" 
+  });
 });
 
 // Start Server
