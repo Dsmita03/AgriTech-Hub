@@ -118,6 +118,15 @@ const Header = () => {
           <ul className="container mx-auto px-4 py-3 space-y-2 text-base font-semibold">
             <li>
               <Link
+                to="/"
+                className="block px-2 py-2 rounded hover:bg-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                onClick={() => setOpen(false)}
+              >
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/about"
                 className="block px-2 py-2 rounded hover:bg-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
                 onClick={() => setOpen(false)}

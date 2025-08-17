@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import FloatingVoiceWidget from "@/components/Bot";  
 import {
   ArrowRight,
   BookOpen,
@@ -269,6 +270,7 @@ const LandingLayout = () => {
       </main>
 
       <Footer />
+      <FloatingVoiceWidget />
     </div>
   );
 };

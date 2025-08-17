@@ -10,7 +10,7 @@ import weatherRoutes from "./routes/weatherRoutes.js";
 import forumRoutes from "./routes/forum.js";
 import diseaseRoutes from "./routes/disease.js";
 import schemeRoutes from "./routes/schemeRoutes.js";
-
+import voiceRoutes from "./routes/voice.js";
 // Initialize environment variables
 dotenv.config();
 
@@ -46,7 +46,7 @@ app.use("/api/weather", weatherRoutes);
 app.use("/api/forum", forumRoutes);
 app.use("/api/disease", diseaseRoutes);
 app.use("/api/schemes", schemeRoutes);
-
+app.use("/api/voice", voiceRoutes);
 // Root route
 app.get("/", (req, res) => {
   res.send("✅ Server is running!");
