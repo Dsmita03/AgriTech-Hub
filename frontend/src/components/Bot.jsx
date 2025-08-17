@@ -22,10 +22,10 @@ const FloatingVoiceWidget = () => {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [typedInput, setTypedInput] = useState(""); // NEW state for text input
+  const [typedInput, setTypedInput] = useState("");
   const timeoutRef = useRef(null);
   const conversationEndRef = useRef(null);
-  
+
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -39,109 +39,119 @@ const FloatingVoiceWidget = () => {
       });
   }, []);
 
-  // Load conversation from Firestore for authenticated users
+  // Load conversation for signed-in users from Firestore; else from session storage
   useEffect(() => {
     if (user) {
-      loadConversationFromFirestore();
+      const unsub = loadConversationFromFirestore();
+      return () => unsub && unsub();
     } else {
-      const savedConversation = sessionStorage.getItem("voice_conversation");
-      if (savedConversation) {
-        setConversation(JSON.parse(savedConversation));
-      }
+      const saved = sessionStorage.getItem("voice_conversation");
+      if (saved) setConversation(JSON.parse(saved));
+      else setConversation([]);
     }
   }, [user]);
 
-  // Save conversation to session storage for non-authenticated users
+  // Persist guest conversation
   useEffect(() => {
     if (!user && conversation.length > 0) {
       sessionStorage.setItem("voice_conversation", JSON.stringify(conversation));
     }
   }, [conversation, user]);
 
-  // Auto-scroll to bottom of conversation
+  // Auto-scroll to bottom
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation]);
 
-  // Load conversation from Firestore
   const loadConversationFromFirestore = () => {
     if (!user) return;
-    const q = query(
+    const qRef = query(
       collection(db, "voiceConversations"),
       where("userId", "==", user.uid),
       orderBy("timestamp", "desc"),
       limit(50)
     );
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const messages = [];
-      querySnapshot.forEach((doc) => {
-        messages.push({ id: doc.id, ...doc.data() });
-      });
-      const sortedMessages = messages.sort((a, b) => 
-        a.timestamp?.toDate() - b.timestamp?.toDate()
-      );
-      
-      setConversation(sortedMessages);
-    });
+    const unsubscribe = onSnapshot(
+      qRef,
+      (snap) => {
+        const msgs = [];
+        snap.forEach((doc) => msgs.push({ id: doc.id, ...doc.data() }));
+        // Sort ascending by timestamp (oldest first)
+        msgs.sort((a, b) => {
+          const ta = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0;
+          const tb = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0;
+          return ta - tb;
+        });
+        setConversation(msgs);
+      },
+      (err) => {
+        console.error("onSnapshot error:", err);
+        setError(err.message || "Realtime updates failed.");
+      }
+    );
     return unsubscribe;
   };
 
-  // Save message to Firestore
+  // Defensive Firestore write
   const saveMessageToFirestore = async (role, text) => {
     if (!user) return;
     try {
-      await addDoc(collection(db, "voiceConversations"), {
+      const cleanText = (text ?? "").toString().trim();
+      if (!cleanText) return;
+      const docData = {
         userId: user.uid,
-        userEmail: user.email,
-        role: role,
-        text: text,
+        userEmail: user.email || null,
+        role,
+        text: cleanText,
         language: lang,
         timestamp: serverTimestamp(),
         sessionId: `${user.uid}_${new Date().toDateString()}`
-      });
-    } catch (error) {
-      console.error("Error saving message to Firestore:", error);
+      };
+      Object.keys(docData).forEach((k) => docData[k] === undefined && delete docData[k]);
+      await addDoc(collection(db, "voiceConversations"), docData);
+    } catch (e) {
+      console.error("Error saving message to Firestore:", e);
     }
   };
 
-  const toggleWidget = () => setOpen(!open);
+  const toggleWidget = () => setOpen((s) => !s);
 
   const startListening = () => {
     if (!SpeechRecognition) {
       setError("🎤 Speech Recognition not supported in this browser.");
       return;
     }
-    
+
     const recognition = new SpeechRecognition();
     recognition.lang = `${lang}-IN`;
     recognition.interimResults = false;
     recognition.continuous = false;
     recognition.maxAlternatives = 1;
-    
+
     setError("");
     setIsListening(true);
     recognition.start();
 
-    recognition.onstart = () => {
-      console.log("🎙️ Mic activated. Speak now...");
-    };
+    recognition.onstart = () => console.log("🎙️ Mic activated. Speak now...");
 
     recognition.onresult = (event) => {
-      const spokenText = event.results[0].transcript;
+      const spokenText = (event.results?.[0]?.transcript ?? "").toString().trim();
       console.log("Speech detected:", spokenText);
-      
-      if (!user) {
-        setConversation((prev) => [...prev, { role: "user", text: spokenText }]);
-      }
-      
+      if (!spokenText) return;
+
+      // Optimistic UI: show user's message immediately
+      setConversation((prev) => [...prev, { role: "user", text: spokenText }]);
+
+      // Firestore write in background
+      if (user) saveMessageToFirestore("user", spokenText);
+
       clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
         submitToVoiceAPI(spokenText);
-      }, 1000);
+      }, 400);
     };
 
     recognition.onspeechend = () => {
-      console.log("Speech ended, stopping recognition.");
       recognition.stop();
     };
 
@@ -155,93 +165,95 @@ const FloatingVoiceWidget = () => {
     };
 
     recognition.onend = () => {
-      console.log("Recognition ended");
       setIsListening(false);
     };
   };
 
-  const submitToVoiceAPI = async (spokenText) => {
-    if (user) {
-      await saveMessageToFirestore("user", spokenText);
-    }
+  const submitToVoiceAPI = async (userText) => {
+    const cleanUserText = (userText ?? "").toString().trim();
+    if (!cleanUserText) return;
 
-    const currentConversation = user 
-      ? conversation 
-      : [...conversation, { role: "user", text: spokenText }];
-    
+    // Build a clean snapshot for API
+    const base = [...conversation, { role: "user", text: cleanUserText }];
+    const sanitized = base
+      .map((m) => ({
+        role: m.role,
+        text: (m.text ?? "").toString().trim()
+      }))
+      .filter((m) => m.text.length > 0 && (m.role === "user" || m.role === "ai"));
+
+    const MAX_MESSAGES = 20;
+    const sliced = sanitized.slice(-MAX_MESSAGES);
+
     setIsLoading(true);
-    
     try {
       const res = await axios.post(
         "https://agritech-hub-b8if.onrender.com/api/voice",
         {
-          conversation: currentConversation.map(msg => ({
-            role: msg.role,
-            text: msg.text
-          })),
+          conversation: sliced,
           fromLang: lang,
-          toLang: lang,
+          toLang: lang
+        },
+        {
+          timeout: 30000,
+          validateStatus: (s) => s >= 200 && s < 500
         }
       );
-      
-      const replyText = res.data.reply || "❌ No reply from Bot";
-      
-      if (user) {
-        await saveMessageToFirestore("ai", replyText);
-      } else {
-        setConversation((prev) => [...prev, { role: "ai", text: replyText }]);
+
+      if (res.status >= 400) {
+        const serverMsg = res.data?.error || res.data?.message || "❌ Server error. Try again.";
+        throw new Error(serverMsg);
       }
-      
-      // Text-to-speech
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(replyText);
-        utterance.lang = `${lang}-IN`;
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        
-        utterance.onerror = (event) => {
-          console.error('Speech synthesis error:', event);
-        };
-        
-        window.speechSynthesis.speak(utterance);
+
+      const replyText = (res.data?.reply ?? "").toString().trim() || "❌ No reply from Bot";
+
+      // Show AI reply immediately
+      setConversation((prev) => [...prev, { role: "ai", text: replyText }]);
+
+      // Save AI reply for authed user
+      if (user) await saveMessageToFirestore("ai", replyText);
+
+      // TTS
+      if ("speechSynthesis" in window) {
+        const utter = new SpeechSynthesisUtterance(replyText);
+        utter.lang = `${lang}-IN`;
+        utter.rate = 0.9;
+        utter.pitch = 1.0;
+        utter.onerror = (ev) => console.error("Speech synthesis error:", ev);
+        window.speechSynthesis.speak(utter);
       }
-      
     } catch (err) {
       console.error("Voice API error:", err);
-      let errorMessage = "❌ Server error. Try again.";
-      
-      if (err.response?.status === 401) {
+      let errorMessage = err?.message || "❌ Server error. Try again.";
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
         errorMessage = "❌ API key error. Contact support.";
-      } else if (err.response?.status === 429) {
+      } else if (axios.isAxiosError(err) && err.response?.status === 429) {
         errorMessage = "❌ Too many requests. Please wait.";
       } else if (!navigator.onLine) {
         errorMessage = "❌ No internet connection.";
       }
-      
+
       setError(errorMessage);
-      
-      if (user) {
-        await saveMessageToFirestore("ai", errorMessage);
-      } else {
-        setConversation((prev) => [...prev, { role: "ai", text: errorMessage }]);
-      }
+      // Show error as AI message
+      setConversation((prev) => [...prev, { role: "ai", text: errorMessage }]);
+      if (user) await saveMessageToFirestore("ai", errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // NEW: handle text submission
   const handleTextSubmit = async (e) => {
     e.preventDefault();
-    if (!typedInput.trim()) return;
+    const clean = (typedInput ?? "").toString().trim();
+    if (!clean) return;
 
-    if (!user) {
-      setConversation((prev) => [...prev, { role: "user", text: typedInput }]);
-    } else {
-      await saveMessageToFirestore("user", typedInput);
-    }
+    // Optimistic UI: show user's typed message
+    setConversation((prev) => [...prev, { role: "user", text: clean }]);
 
-    await submitToVoiceAPI(typedInput);
+    // Save in background for authed users
+    if (user) await saveMessageToFirestore("user", clean);
+
+    await submitToVoiceAPI(clean);
     setTypedInput("");
   };
 
@@ -280,7 +292,6 @@ const FloatingVoiceWidget = () => {
 
       {open && (
         <div className="fixed bottom-20 right-6 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 z-50 overflow-hidden">
-          
           {/* Header */}
           <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 text-white">
             <div className="flex justify-between items-center">
@@ -330,7 +341,7 @@ const FloatingVoiceWidget = () => {
               {isListening ? "🎙️ Listening..." : isLoading ? "🤖 Thinking..." : "🎤 Speak Now"}
             </button>
 
-            {/* NEW: Text input */}
+            {/* Text input */}
             <form onSubmit={handleTextSubmit} className="flex items-center mb-3">
               <input
                 type="text"
@@ -389,29 +400,29 @@ const FloatingVoiceWidget = () => {
               ) : (
                 <div className="space-y-3">
                   {conversation
-                    .filter(msg => msg.role !== 'system')
+                    .filter((msg) => msg.role !== "system")
                     .map((msg, i) => (
-                    <div
-                      key={msg.id || i}
-                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                    >
                       <div
-                        className={`max-w-[85%] p-3 rounded-2xl shadow-sm ${
-                          msg.role === "user" 
-                            ? "bg-green-500 text-white rounded-br-md" 
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-md"
-                        }`}
+                        key={msg.id || i}
+                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                       >
-                        <div className="text-sm leading-relaxed break-words">
-                          {msg.text}
-                        </div>
-                        {user && msg.timestamp && (
-                          <div className="text-xs opacity-70 mt-1">
-                            {msg.timestamp.toDate?.()?.toLocaleTimeString() || ''}
+                        <div
+                          className={`max-w-[85%] p-3 rounded-2xl shadow-sm ${
+                            msg.role === "user" 
+                              ? "bg-green-500 text-white rounded-br-md" 
+                              : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-md"
+                          }`}
+                        >
+                          <div className="text-sm leading-relaxed break-words">
+                            {msg.text}
                           </div>
-                        )}
+                          {user && msg.timestamp && (
+                            <div className="text-xs opacity-70 mt-1">
+                              {msg.timestamp.toDate?.()?.toLocaleTimeString() || ""}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
                   ))}
                   <div ref={conversationEndRef} />
                 </div>
@@ -423,7 +434,7 @@ const FloatingVoiceWidget = () => {
           <div className="bg-gray-50 dark:bg-gray-800/50 px-4 py-2 text-center">
             <div className="text-xs text-gray-500 dark:text-gray-400">
               Powered by <span className="font-medium text-blue-600 dark:text-blue-400">Perplexity AI</span>
-              {user ? ' • Conversations saved' : ' • Sign in to save'}
+              {user ? " • Conversations saved" : " • Sign in to save"}
             </div>
           </div>
         </div>
